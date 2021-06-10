@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd  http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+    <http:listener-config name="contracts-sap-httpListenerConfig">
+        <http:listener-connection host="0.0.0.0" port="${listenerAPI.port}" />
+    </http:listener-config>
+    <apikit:config name="contracts-sap-config" api="resource::2332bd66-03f6-49a8-bb2d-452c4ef8ad43:contracts-sap:1.0.2:oas:zip:contracts-sap.json" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <http:request-config name="HTTP_Request_Contracts_Local" doc:name="HTTP Request configuration" doc:id="a50fdb2e-0f91-4671-8705-ceaeb7b79456">
+        <http:request-connection protocol="HTTPS" host="run.mocky.io" />
+    </http:request-config>
+    <http:request-config name="HTTP_Request_Contract_Local" doc:name="HTTP Request configuration" doc:id="e308a4fc-17a3-4bcc-bb16-59825e453451" >
+		<http:request-connection protocol="HTTPS" host="run.mocky.io" />
+	</http:request-config>
+	<flow name="contracts-sap-main">
+        <http:listener config-ref="contracts-sap-httpListenerConfig" path="${apiPath}">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="contracts-sap-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:BAD_REQUEST">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">400</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">405</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">406</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">415</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">501</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="contracts-sap-console">
+        <http:listener config-ref="contracts-sap-httpListenerConfig" path="/console/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="contracts-sap-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="post:\contracts\search:application\json:contracts-sap-config">
+        <logger level="INFO" message="post:\contracts\search:application\json:contracts-sap-config" />
+		<http:request method="POST" doc:name="Request" doc:id="536e5fa7-be7f-4557-b51c-cacb469e4898" config-ref="HTTP_Request_Contracts_Local" path="/v3/1b528807-147b-4371-8f60-a484eb57db29" >
+		</http:request>
+        <logger level="INFO" doc:name="Logger" doc:id="daedd993-4a53-4ff6-b50e-2ae8c0235330" />
+		<choice doc:name="Choice" doc:id="dae5bb9c-1f51-41c9-9b60-684c51a34c8e">
+            <when expression="#[sizeOf(payload.error.msgCode default []) &gt; 0]">
+                <ee:transform doc:name="Transform Message" doc:id="65adf50a-3f0f-42d1-bf67-339396eecc79">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"msgCode": payload.error.msgCode,
+	"msgText": payload.error.msgText
+}]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+                <set-variable value="#[payload.error.msgCode]" doc:name="Set Variable" doc:id="3d3d3aac-6d9b-44ad-8b0f-ff8772e15236" variableName="httpStatus" />
+            </when>
+			<otherwise>
+				<ee:transform doc:name="Transform Message" doc:id="9ab8914d-3486-4efe-a9d0-876bfa903165">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+            </otherwise>
+        </choice>
+		<error-handler>
+            <on-error-propagate enableNotifications="true" logException="true" doc:name="Error Propagate" doc:id="3b43eb8c-62e3-44d4-9e86-7528c20f25bc">
+                <logger level="INFO" doc:name="Logger" doc:id="8f9e1531-2fdb-4cb9-9db4-a84452ee79e8" message="#[error.errorMessage.payload]" />
+                <ee:transform doc:name="Transform Message" doc:id="8f001947-7b15-48c0-a033-56723c2a068a">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+error.errorMessage.payload.error]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+                <set-variable value="#[error.errorMessage.attributes.statusCode]" doc:name="Set Variable" doc:id="0a7a012e-ab7d-4567-acbb-9dc75320b6a7" variableName="httpStatus" />
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="get:\contracts\(contractCode)\content:contracts-sap-config">
+        <logger level="INFO" doc:name="Logger" doc:id="8db4bb9c-b05a-4a8a-8203-b54848049940" />
+		<set-variable value="#[attributes.uriParams.'contractCode']" doc:name="Set Variable" doc:id="6e87ed86-b1d6-482c-8954-41dcb6210230" variableName="contractCode"/>
+		<ee:transform doc:name="Transform Message" doc:id="2b91f52d-4bc0-4286-8bbb-9677658c24a8" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"input": {
+		"id": vars.contractCode
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="GET" doc:name="Request" doc:id="68f06729-b50b-42d8-b62f-970b9aff71c4" config-ref="HTTP_Request_Contract_Local" path="/v3/ec9101de-60aa-4286-97ff-dc4c54b2612d"/>
+        <ee:transform doc:name="Transform Message" doc:id="7501daa9-5d81-4490-b008-0ff34662c89e" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"contractCode": vars.contractCode,
+	"contractContent": payload.document.file
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="a7350698-de72-464d-8577-ea2eacaf4ac7" >
+				<logger level="INFO" doc:name="Logger" doc:id="6789d9e7-10ed-43c0-8ad0-c0b8d0ccfbcf" />
+				<set-variable value="#[error.errorMessage.attributes.statusCode]" doc:name="Set Variable" doc:id="489d3fb7-9c5a-4ae6-9cbd-6ed22a5a10d0" variableName="httpStatus" />
+				<ee:transform doc:name="Transform Message" doc:id="d30c3d7b-2b0e-4978-be74-5f75479479e4" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"msgCode": vars.httpStatus,
+	"msgText": error.errorType.identifier
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+    </flow>
+    <flow name="get:\contracts\(contractCode)\documents\(documentCode)\content:contracts-sap-config">
+        <set-variable value="#[attributes.uriParams.'documentCode']" doc:name="Set Variable" doc:id="873e68e6-1e5f-4bee-bc38-f55bc8e31ee1" variableName="contractCode" />
+		<ee:transform doc:name="Transform Message" doc:id="c7e5320e-d066-46eb-b3a4-ece5a88b185d">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"msgCode": vars.httpStatus,
+	"msgText": error.errorType.identifier
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="GET" doc:name="Request" doc:id="60727ada-319b-4dda-bbcb-0165f8fab816" config-ref="HTTP_Request_Contract_Local" path="/v3/ec9101de-60aa-4286-97ff-dc4c54b2612d"/>
+		<ee:transform doc:name="Transform Message" doc:id="47793ffa-6c97-408d-9955-b569f1144a43">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"contractCode": vars.contractCode,
+	"contractContent": payload.document.file
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" message="get:\contracts\(contractCode)\documents\(documentCode)\content:contracts-sap-config" />
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="f5a5d2bc-c974-4ce2-912e-cc09d5396647" >
+				<logger level="INFO" doc:name="Logger" doc:id="760573b1-8b43-4c17-b0ba-b8363c16fb74" />
+				<set-variable value="#[error.errorMessage.attributes.statusCode]" doc:name="Set Variable" doc:id="2e29ba00-f8a9-4fa3-a120-0c2d203a5bed" variableName="httpStatus" />
+				<ee:transform doc:name="Transform Message" doc:id="c495c512-a85f-44b1-b4e3-3ac4dc7bca84" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"msgCode": vars.httpStatus,
+	"msgText": error.errorType.identifier
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+    </flow>
+</mule>

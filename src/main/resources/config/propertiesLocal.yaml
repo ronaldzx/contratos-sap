@@ -1,0 +1,29 @@
+apiPath: "/finance/contracts-sap/api/v1/*"
+
+autodiscoveryID : "16887572"
+
+listenerAPI:
+  port: "8080"
+
+listenerHealth:
+
+  port: "8081"
+
+LOG_LEVEL: "ERROR"
+
+mock:
+  postContracts: "https://run.mocky.io/v3/bf927b6f-4a8d-4d52-a544-cdae58459946"
+  postContracts404: "https://run.mocky.io/v3/5efe1c5f-9a81-46de-b51f-5e18d4413671"
+  
+  getContract: "https://run.mocky.io/v3/ec9101de-60aa-4286-97ff-dc4c54b2612d"
+  getContract404': "https://run.mocky.io/v3/4f313e94-1e8c-45d2-a006-f1009eb4dfca"
+  getContract500: "https://run.mocky.io/v3/1e9a4fc9-5064-4de8-9f81-eafd8134ca18"
+  
+  postContractv2: "https://run.mocky.io/v3/a4462d21-4caa-40f6-be1d-1e1fcea3ad1e"
+  postContractsv2: "https://run.mocky.io/v3/1b528807-147b-4371-8f60-a484eb57db29"
+  postContractsv2Duplicado: "https://run.mocky.io/v3/6fbefa59-c5d0-4afc-ae60-4ab905c1a813"
+  postContractsv2NoMain: "https://run.mocky.io/v3/f06240f4-e6de-41c2-a8a0-ac58a13e2ef3"
+
+  
+  
+  

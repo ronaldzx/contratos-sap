@@ -1,0 +1,10 @@
+apiPath: "/<businessGroup>/<nombreProyecto>/api/v1/*"
+
+autodiscoveryID : ${AUTODISCOVERY_ID}
+
+listenerAPI:
+  port: "8080"
+
+listenerHealth:
+
+  port: "8081"
